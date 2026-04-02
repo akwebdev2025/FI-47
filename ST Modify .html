@@ -1,0 +1,880 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Study Tracker</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<!-- LOGIN SCREEN -->
+<div id="login-container">
+  <h2>Login to Continue</h2>
+  <input type="text" id="login-id" placeholder="Enter ID"><br>
+  <input type="password" id="login-pass" placeholder="Enter Password"><br>
+  <button onclick="verifyLogin()">Login</button>
+</div>
+
+<!-- MAIN APP (hidden initially) -->
+<div id="main-content" style="display: none;">
+  <!-- Your tracker or study app goes here -->
+  
+  <!-- Add your existing tracker code here -->
+</div>
+<header>
+  <span class="hamburger" onclick="toggleDrawer()">&#9776;</span>
+  Study Tracker
+</header>
+
+<aside class="drawer" id="drawer">
+  <span class="close" onclick="toggleDrawer()">&times;</span>
+  <h3>Student Profile</h3>
+  <p>Name: Akash</p>
+  <p>Class: 12th A2</p>
+  <hr />
+  <label><input type="checkbox" onchange="toggleDarkMode(this.checked)"> Dark Mode</label>
+<hr />
+<button class="btn" onclick="resetProgress()">Reset Progress</button>
+
+</aside>
+
+<main class="container">
+  <section id="subjectSelect">
+    <h2>Select Subject</h2>
+    <button class="btn" onclick="loadSubject('Maths')">Maths</button>
+    <button class="btn" onclick="loadSubject('Geography')">Geography</button>
+    <button class="btn" onclick="loadSubject('History')">History</button>
+    <button class="btn" onclick="loadSubject('Political Science')">Political Science</button>
+    <button class="btn" onclick="loadSubject('English')">English</button>
+    
+  </section>
+
+  <section id="chapterList" class="hidden">
+    <h2 id="subjectTitle"></h2>
+
+    <div class="progress-container">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <div class="progress-label" id="progressPercent">0%</div>
+
+    <div id="chapters"></div>
+    <button class="btn" onclick="goBackToMenu()">Back to Menu</button>
+  </section>
+
+  <section id="graphSection" class="hidden">
+    <div class="chart-container">
+      <canvas id="consistencyChart" height="400" ></canvas>
+    </div>
+    <div id="topicDetails" class="topic-list hidden"></div>
+    <button class="btn" onclick="goBack()">Back</button>
+  </section>
+</main>
+
+<script src="script.js"></script>
+</body>
+</html><style>:root {
+  --primary: #6c2bd9;
+  --background-light: #f6f6f6;
+  --background-dark: #1e1e1e;
+  --text-light: #333;
+  --text-dark: #f0f0f0;
+}
+
+body {
+  font-family: 'Arial', sans-serif;
+  margin: 0;
+  background: var(--background-light);
+  color: var(--text-light);
+  transition: background 0.3s, color 0.3s;
+}
+
+body.dark-mode {
+  background: var(--background-dark);
+  color: var(--text-dark);
+}
+
+header {
+  background: var(--primary);
+  color: white;
+  padding: 1rem;
+  text-align: center;
+  font-size: 1.8rem;
+  position: relative;
+}
+
+.hamburger {
+  position: absolute;
+  left: 1rem;
+  top: 1rem;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  left: -100%;
+  width: 250px;
+  height: 100%;
+  background: var(--background-light);
+  box-shadow: 2px 0 5px rgba(0,0,0,0.3);
+  transition: left 0.3s;
+  padding: 1rem;
+  z-index: 10;
+}
+
+.drawer.dark-mode {
+  background: var(--background-dark);
+}
+
+.drawer.open {
+  left: 0;
+}
+
+.drawer .close {
+  font-size: 1.2rem;
+  cursor: pointer;
+  float: right;
+}
+
+.container {
+  padding: 1rem;
+}
+
+.btn {
+  background: var(--primary);
+  color: white;
+  padding: 0.8rem;
+  margin: 0.5rem 0;
+  width: 100%;
+  border: none;
+  font-size: 1.2rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.hidden {
+  display: none;
+}
+
+.chapter {
+  background: white;
+  margin: 1rem 0;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 0.5rem;
+}
+
+body.dark-mode .chapter {
+  background: #2c2c2c;
+  color: var(--text-dark);
+}
+
+.topics {
+  background: #eee;
+  padding-left: 1rem;
+  color: var(--text-light);
+}
+
+body.dark-mode .topics {
+  background: #333;
+  color: var(--text-dark);
+}
+
+.topic-list {
+  background: #fff;
+  padding: 1rem;
+  margin-top: 1rem;
+  border-radius: 8px;
+}
+
+body.dark-mode .topic-list {
+  background: #2c2c2c;
+  color: var(--text-dark);
+}
+
+canvas {
+  min-width: 600px;
+}
+
+.chart-container {
+  overflow-x: auto;
+}
+
+.progress-container {
+  width: 100%;
+  background-color: #ddd;
+  border-radius: 20px;
+  margin: 10px 0;
+  height: 25px;
+}
+
+.progress-bar {
+  height: 100%;
+  width: 0%;
+  background-color: var(--primary);
+  border-radius: 20px;
+  transition: width 0.3s;
+}
+
+.progress-label {
+  text-align: right;
+  font-weight: bold;
+}
+
+
+
+#login-container {
+  text-align: center;
+  margin-top: 100px;
+  background: #f5f5f5;
+  padding: 40px;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 10px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+}
+
+#login-container input {
+  margin: 10px;
+  padding: 10px;
+  width: 80%;
+  font-size: 16px;
+}
+
+#login-container button {
+  padding: 10px 20px;
+  font-size: 16px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#login-container button:hover {
+  background: #0056b3;
+}</style><script>const subjects = { "Maths": [ { title: "Relations and Functions", topics: [ { name: "Relations and Functions", subtopics: [ "Types of relations: reflexive, symmetric, transitive, equivalence", "One-to-one and onto functions" ] }, { name: "Inverse Trigonometric Functions", subtopics: [ "Definition, range, domain", "Principal value branch", "Graphs of inverse trigonometric functions" ] } ] }, { title: "Algebra", topics: [ { name: "Matrices", subtopics: [ "Concept, notation, order, equality", "Types: zero, identity, symmetric, skew-symmetric", "Matrix operations: addition, multiplication, scalar multiplication", "Non-commutativity and zero product", "Invertible matrices and uniqueness of inverse" ] }, { name: "Determinants", subtopics: [ "Determinants up to 3×3", "Minors and cofactors", "Area of triangle using determinant", "Adjoint and inverse of a matrix", "Solving linear equations using inverse matrix" ] } ] }, { title: "Calculus", topics: [ { name: "Continuity and Differentiability", subtopics: [ "Continuity, chain rule", "Derivatives of composite & inverse trig functions", "Implicit differentiation", "Exponential/logarithmic functions and derivatives", "Logarithmic differentiation", "Parametric derivatives", "Second order derivatives" ] }, { name: "Applications of Derivatives", subtopics: [ "Rate of change", "Increasing/decreasing functions", "Maxima and minima", "First and second derivative tests" ] }, { name: "Integrals", subtopics: [ "Integration as inverse of differentiation", "Methods: substitution, partial fractions, parts", "Standard integrals (rational, root, quadratic)", "Definite integrals and their properties" ] }, { name: "Applications of Integrals", subtopics: [ "Area under curves", "Lines, circles, parabolas, ellipses (standard form)" ] }, { name: "Differential Equations", subtopics: [ "Order, degree, general/particular solutions", "Separation of variables", "Homogeneous DEs", "Linear differential equations: dy/dx + py = q, dx/dy + px = q" ] } ] }, { title: "Vectors and 3D Geometry", topics: [ { name: "Vectors", subtopics: [ "Scalars and vectors, magnitude, direction", "Direction cosines and ratios", "Vector types (unit, zero, parallel, etc.)", "Position vector, vector addition, scalar multiplication", "Dot and cross product: definition, properties, applications" ] }, { name: "3D Geometry", subtopics: [ "Line joining two points: direction cosines/ratios", "Cartesian and vector equation of a line", "Skew lines and shortest distance", "Angle between two lines" ] } ] }, { title: "Linear Programming", topics: [ { name: "Linear Programming", subtopics: [ "Terminology: constraints, objective function, optimization", "Graphical solution of 2-variable problems", "Feasible/infeasible regions and solutions" ] } ] }, { title: "Probability", topics: [ { name: "Probability", subtopics: [ "Conditional probability", "Multiplication theorem", "Independent events", "Total probability theorem", "Bayes' theorem" ] } ] } ],
+
+"Political Science": [ { title: "Contemporary World Politics", topics: [ { name: "The End of Bipolarity", subtopics: [ "The Soviet System", "Gorbachev and the Disintegration", "Causes and Consequences of Disintegration", "Shock Therapy and its Consequences", "New entities: Russia, Balkan States, Central Asian States", "India's Relations with Post-Communist Countries" ] }, { name: "Contemporary Centres of Power", subtopics: [ "European Union", "ASEAN", "Rise of China", "Japan and South Korea", "India as an Emerging Power", "BRICS", "Israel" ] }, { name: "Contemporary South Asia", subtopics: [ "Military and Democracy in Pakistan and Bangladesh", "Monarchy and Democracy in Nepal", "Ethnic Conflict and Democracy in Sri Lanka", "India-Pakistan Conflicts", "India and Its Neighbours", "SAARC, Peace and Cooperation" ] }, { name: "International Organizations", subtopics: [ "Meaning and Importance", "Evolution of the UN", "Structure and Functions", "Principal Organs of the UN", "Reform of the UN and Its Agencies", "India and the UN Reforms", "Agencies: IMF, World Bank, WTO, ILO, IAEA", "NGOs: Amnesty International, Human Rights Watch", "UNESCO, UNICEF, ILO" ] }, { name: "Security in the Contemporary World", subtopics: [ "Types of Security: Traditional and Non-traditional", "New Threats and Challenges", "India's Security Strategy", "Cooperative Security", "Terrorism" ] }, { name: "Environment and Natural Resources", subtopics: [ "Global Environmental Concerns", "Global Commons", "Common but Differentiated Responsibilities", "India's Environmental Policies", "Indigenous Rights and Environmental Movements", "Geopolitics of Resources" ] }, { name: "Globalisation", subtopics: [ "Concept and Causes", "Consequences of Globalisation", "India and Globalisation", "Resistance to Globalisation" ] } ] }, { title: "Politics in India Since Independence", topics: [ { name: "Challenges of Nation-Building", subtopics: [ "Partition and its Consequences", "Integration of Princely States", "Reorganisation of States", "Role of Leaders like Sardar Patel" ] }, { name: "Era of One-Party Dominance", subtopics: [ "Congress Dominance in Elections", "Nature of Congress System", "Opposition Parties" ] }, { name: "Politics of Planned Development", subtopics: [ "Ideas of Development and Planning", "Five-Year Plans and Planning Commission", "NITI Aayog and National Development Council" ] }, { name: "India's External Relations", subtopics: [ "Non-Alignment and Nehru's Role", "Indo-China and Indo-Pak Relations", "1971 Bangladesh War", "India-Israel Relations", "India's Nuclear Policy" ] }, { name: "Challenges to and Restoration of the Congress System", subtopics: [ "Political Succession Post-Nehru", "1967 Elections and Congress Split", "Indira Gandhi and Congress Restoration" ] }, { name: "The Crisis of Democratic Order", subtopics: [ "Emergency (1975-77)", "Lok Sabha Elections 1977 and Janata Government", "Jaya Prakash Narayan and Total Revolution" ] }, { name: "Regional Aspirations", subtopics: [ "Regional Demands and Conflicts", "Punjab and Northeast Movements", "The Kashmir Issue" ] }, { name: "Recent Developments in Indian Politics", subtopics: [ "Coalition Politics (NDA III, IV, V)", "Mandal Commission and Rise of Backward Classes", "Ayodhya Dispute and Secularism", "Welfare Programs and Governance Initiatives" ] } ] } ], 
+"Geography": [
+  {
+    title: "Fundamentals of Human Geography",
+    topics: [
+      {
+        name: "Human Geography: Nature and Scope",
+        subtopics: [
+          "Introduction to Human Geography",
+          "Approaches: Regional, Systematic, Dualism",
+          "Nature of Human Geography",
+          "Naturalisation of Humans & Humanisation of Nature",
+          "Schools and Subfields of Human Geography"
+        ]
+      },
+      {
+        name: "The World Population Distribution, Density and Growth",
+        subtopics: [
+          "Population Distribution and Density",
+          "Factors Influencing Distribution",
+          "Population Growth and Components",
+          "Demographic Transition",
+          "Population Control Measures"
+        ]
+      },
+      {
+        name: "Human Development",
+        subtopics: [
+          "Concept and Indicators",
+          "Growth vs. Development",
+          "Four Pillars of Human Development",
+          "Approaches & Measures: HDI, HPI, GNH"
+        ]
+      },
+      {
+        name: "Primary Activities",
+        subtopics: [
+          "Types: Hunting, Gathering, Pastoralism, Herding",
+          "Agriculture Types: Subsistence, Commercial, Plantation, Mixed",
+          "Mining: Types, Factors and Methods"
+        ]
+      },
+      {
+        name: "Secondary Activities",
+        subtopics: [
+          "Modern Manufacturing Characteristics",
+          "Industrial Location Factors",
+          "Classification by Size, Input, Output, Ownership",
+          "High-tech Industries"
+        ]
+      },
+      {
+        name: "Tertiary and Quaternary Activities",
+        subtopics: [
+          "Types of Tertiary Activities",
+          "Trade, Transport, Communication",
+          "Services and Tourism",
+          "Quaternary and Quinary Activities",
+          "Digital Divide"
+        ]
+      },
+      {
+        name: "Transport, Communication and Trade",
+        subtopics: [
+          "Modes: Road, Rail, Water, Air, Pipelines",
+          "Major Transport Routes and Ports",
+          "Satellite Communication & Internet"
+        ]
+      },
+      {
+        name: "International Trade",
+        subtopics: [
+          "History and Basis of Trade",
+          "Types of Trade: Bilateral & Multilateral",
+          "WTO, Trade Blocs, Dumping",
+          "Gateways: Ports and Airports"
+        ]
+      }
+    ]
+  },
+  {
+    title: "India - People and Economy",
+    topics: [
+      {
+        name: "Population Distribution, Density, Growth and Composition",
+        subtopics: [
+          "Distribution, Density and Growth",
+          "Population Composition: Rural-Urban, Linguistic, Religious",
+          "Working Population",
+          "Gender Sensitivity Initiatives"
+        ]
+      },
+      {
+        name: "Human Settlements",
+        subtopics: [
+          "Rural Settlements: Types & Distribution",
+          "Urban Settlements & Urbanisation",
+          "Town Evolution and Classification",
+          "Smart Cities Mission"
+        ]
+      },
+      {
+        name: "Land Resources and Agriculture",
+        subtopics: [
+          "Land Use Categories and Changes",
+          "Cropping Seasons and Major Crops",
+          "Agricultural Development & Output",
+          "Problems in Indian Agriculture"
+        ]
+      },
+      {
+        name: "Water Resources",
+        subtopics: [
+          "Surface and Groundwater Resources",
+          "Water Demand & Uses",
+          "Emerging Water Issues",
+          "Water Conservation and Management"
+        ]
+      },
+      {
+        name: "Mineral and Energy Resources",
+        subtopics: [
+          "Types and Belts of Mineral Resources",
+          "Ferrous, Non-Ferrous, Non-Metallic Mineral Distribution",
+          "Conventional and Non-conventional Energy Sources",
+          "Mineral Conservation"
+        ]
+      },
+      {
+        name: "Planning and Sustainable Development in Indian Context",
+        subtopics: [
+          "Target Area Planning",
+          "Sustainable Development Concept",
+          "Case Studies: Bharmaur ITDP, Indira Gandhi Canal"
+        ]
+      },
+      {
+        name: "Transport and Communication",
+        subtopics: [
+          "Land, Water, and Air Transport",
+          "Oil and Gas Pipelines",
+          "Communication Networks: Personal and Mass"
+        ]
+      },
+      {
+        name: "International Trade",
+        subtopics: [
+          "Composition and Direction of Trade",
+          "Major Indian Ports and Airports",
+          "India's Role in Global Trade"
+        ]
+      },
+      {
+        name: "Geographical Perspective on Selected Issues and Problems",
+        subtopics: [
+          "Pollution Types",
+          "Urban Waste Disposal",
+          "Rural-Urban Migration",
+          "Slums and Land Degradation"
+        ]
+      }
+    ]
+  },
+  {
+    title: "Geography Practical Work (Part II)",
+    topics: [
+      {
+        name: "Data - Its Source and Compilation",
+        subtopics: [
+          "Types of Data: Primary, Secondary, Unpublished",
+          "Tabulation and Classification",
+          "Frequency Polygon and Grouping"
+        ]
+      },
+      {
+        name: "Data Processing",
+        subtopics: [
+          "Measures of Central Tendency: Mean, Median, Mode",
+          "Tabulation and Comparison"
+        ]
+      },
+      {
+        name: "Graphical Representation of Data",
+        subtopics: [
+          "General Rules for Graphs",
+          "Types: Line, Bar, Pie, Compound, Flowcharts",
+          "Thematic Maps: Dot, Choropleth, Isopleth"
+        ]
+      },
+      {
+        name: "Spatial Information Technology",
+        subtopics: [
+          "GIS: Introduction and Components",
+          "Data Formats and Input",
+          "Overlay & Buffer Analysis"
+        ]
+      }
+    ]
+  }
+],
+ "History": [
+  {
+    title: "Themes in Indian History - Part I",
+    topics: [
+      {
+        name: "Bricks, Beads and Bones",
+        subtopics: [
+          "The Harappan Civilisation",
+          "Archaeological sources and interpretations",
+          "Urban planning and artefacts"
+        ]
+      },
+      {
+        name: "Kings, Farmers and Towns",
+        subtopics: [
+          "Early States and Economies (c.600 BCE - 600 CE)",
+          "Inscriptions and political institutions",
+          "Economic and administrative systems"
+        ]
+      },
+      {
+        name: "Kinship, Caste and Class",
+        subtopics: [
+          "Early Societies (c.600 BCE - 600 CE)",
+          "Family and kinship in ancient texts",
+          "Social norms and hierarchy"
+        ]
+      },
+      {
+        name: "Thinkers, Beliefs and Buildings",
+        subtopics: [
+          "Cultural Developments (c.600 BCE - 600 CE)",
+          "Buddhism and religious architecture",
+          "Stupas and symbolism"
+        ]
+      }
+    ]
+  },
+  {
+    title: "Themes in Indian History - Part II",
+    topics: [
+      {
+        name: "Through the Eyes of Travellers",
+        subtopics: [
+          "Perceptions of Society (c. tenth to seventeenth centuries)",
+          "Accounts of Al-Biruni, Ibn Battuta, Bernier",
+          "Social and cultural conditions"
+        ]
+      },
+      {
+        name: "Bhakti-Sufi Traditions",
+        subtopics: [
+          "Changes in Religious Beliefs and Devotional Texts (c. eighth to eighteenth centuries)",
+          "Bhakti saints and devotional paths",
+          "Sufi orders and teachings"
+        ]
+      },
+      {
+        name: "An Imperial Capital: Vijayanagara",
+        subtopics: [
+          "Urban structures and temple architecture",
+          "Water management and city planning",
+          "Travelers' accounts and administrative systems"
+        ]
+      },
+      {
+        name: "Peasants, Zamindars and the State",
+        subtopics: [
+          "Agrarian Society under the Mughals (c. sixteenth-seventeenth centuries)",
+          "Revenue systems",
+          "Role of zamindars and peasants"
+        ]
+      }
+    ]
+  },
+  {
+    title: "Themes in Indian History - Part III",
+    topics: [
+      {
+        name: "Colonialism and the Countryside",
+        subtopics: [
+          "Exploring Official Archives",
+          "Revenue systems and rural changes",
+          "Resistance and responses"
+        ]
+      },
+      {
+        name: "Rebels and the Raj",
+        subtopics: [
+          "1857 Revolt and its Representations",
+          "Planning, coordination, and spread",
+          "Visual sources and narratives"
+        ]
+      },
+      {
+        name: "Mahatma Gandhi and the Nationalist Movement",
+        subtopics: [
+          "Civil Disobedience and Beyond",
+          "Gandhian ideology and movements",
+          "Source interpretation: newspapers, biographies"
+        ]
+      },
+      {
+        name: "Framing the Constitution",
+        subtopics: [
+          "The Beginning of a New Era",
+          "Constituent Assembly debates",
+          "Key features and philosophies of the Constitution"
+        ]
+      }
+    ]
+  }
+],
+  "English": [
+  {
+    title: "Flamingo - Prose",
+    topics: [
+      {
+        name: "The Last Lesson",
+        subtopics: ["Theme", "Characters", "Setting", "Message", "Narrative style"]
+      },
+      {
+        name: "Lost Spring",
+        subtopics: ["Poverty and child labour", "Social injustice", "Narration", "Human resilience"]
+      },
+      {
+        name: "Deep Water",
+        subtopics: ["Overcoming fear", "Autobiographical element", "Symbolism", "Narrative flow"]
+      },
+      {
+        name: "The Rattrap",
+        subtopics: ["Irony", "Redemption", "Character development", "Philosophical message"]
+      },
+      {
+        name: "Indigo",
+        subtopics: ["Gandhian principles", "Freedom struggle", "Indigo farmers' plight", "Narrative tone"]
+      },
+      {
+        name: "Poets and Pancakes",
+        subtopics: ["Cinema and culture", "Satire", "Autobiographical touch", "Gender and work"]
+      },
+      {
+        name: "The Interview",
+        subtopics: ["Interview as a genre", "Different perspectives", "Curtain raiser", "Yann Martel profile"]
+      },
+      {
+        name: "Going Places",
+        subtopics: ["Adolescent dreams", "Reality vs. fantasy", "Character sketch", "Narrative style"]
+      }
+    ]
+  },
+  {
+    title: "Flamingo - Poetry",
+    topics: [
+      {
+        name: "My Mother at Sixty-Six",
+        subtopics: ["Theme of ageing", "Imagery", "Emotional contrast", "Narrative voice"]
+      },
+      {
+        name: "Keeping Quiet",
+        subtopics: ["Theme of introspection", "Poetic devices", "Tone and message"]
+      },
+      {
+        name: "A Thing of Beauty",
+        subtopics: ["Nature as healer", "Symbolism", "Romantic elements", "Use of imagery"]
+      },
+      {
+        name: "A Roadside Stand",
+        subtopics: ["Theme of rural neglect", "Tone: ironic vs. sympathetic", "Critique of urban-rural divide"]
+      },
+      {
+        name: "Aunt Jennifer's Tigers",
+        subtopics: ["Feminism and freedom", "Symbolism of tigers", "Rhyming scheme", "Contrast in tone"]
+      }
+    ]
+  },
+  {
+    title: "Vistas - Supplementary Reader",
+    topics: [
+      {
+        name: "The Third Level",
+        subtopics: ["Theme of escapism", "Psychological perspective", "Historical setting"]
+      },
+      {
+        name: "The Tiger King",
+        subtopics: ["Satire on power", "Irony and humour", "Symbolism of tigers"]
+      },
+      {
+        name: "Journey to the End of the Earth",
+        subtopics: ["Environment awareness", "Geography & human evolution", "Antarctica experience"]
+      },
+      {
+        name: "The Enemy",
+        subtopics: ["Humanity beyond borders", "Conflict between duty and conscience"]
+      },
+      {
+        name: "On the Face of It",
+        subtopics: ["Disability and self-esteem", "Emotional healing", "Dialogue-based narrative"]
+      },
+      {
+        name: "Memories of Childhood",
+        subtopics: [
+          "The Cutting of My Long Hair",
+          "We Too are Human Beings",
+          "Theme of racial/social discrimination",
+          "Autobiographical expression"
+        ]
+      }
+    ]
+  }
+] }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+let selectedSubject = '';
+let studyLog = JSON.parse(localStorage.getItem('studyLog')) || {};
+let chartInstance;
+
+function saveStudyLog() {
+  localStorage.setItem('studyLog', JSON.stringify(studyLog));
+}
+
+function toggleDrawer() {
+  document.getElementById('drawer').classList.toggle('open');
+}
+
+function toggleDarkMode(isDark) {
+  document.body.classList.toggle('dark-mode', isDark);
+  document.getElementById('drawer').classList.toggle('dark-mode', isDark);
+}
+
+function loadSubject(subject) {
+  selectedSubject = subject;
+  document.getElementById('subjectSelect').classList.add('hidden');
+  document.getElementById('chapterList').classList.remove('hidden');
+  document.getElementById('subjectTitle').textContent = subject;
+
+  const chapterData = subjects[subject];
+  const container = document.getElementById('chapters');
+  container.innerHTML = '';
+
+  chapterData.forEach((ch, chapterIndex) => {
+    const div = document.createElement('div');
+    div.classList.add('chapter');
+
+    let topicsHtml = '';
+    ch.topics.forEach((t, topicIndex) => {
+      if (typeof t === 'string') {
+        const topicKey = `[${subject}] ${t}`;
+        const isChecked = Object.values(studyLog).some(day => day.includes(topicKey));
+        topicsHtml += `<div><input type="checkbox" onchange="markTopic('${t}', this.checked)" ${isChecked ? 'checked' : ''}> ${t}</div>`;
+      } else {
+        topicsHtml += `<div><strong>${t.name}</strong></div>`;
+        t.subtopics.forEach((sub, subIndex) => {
+          const topicKey = `[${subject}] ${t.name} - ${sub}`;
+          const isChecked = Object.values(studyLog).some(day => day.includes(topicKey));
+          topicsHtml += `<div style="margin-left: 20px;">
+            <input type="checkbox" onchange="markTopic('${t.name} - ${sub}', this.checked)" ${isChecked ? 'checked' : ''}>
+            ${sub}
+          </div>`;
+        });
+      }
+    });
+
+    div.innerHTML = `<strong>${ch.title}</strong> 
+      <button onclick="toggleTopics(${chapterIndex})">Topics</button>
+      <div class="topics hidden">${topicsHtml}</div>`;
+
+    container.appendChild(div);
+  });
+
+  updateProgress();
+}
+
+function toggleTopics(index) {
+  const topicDivs = document.querySelectorAll('.topics');
+  topicDivs[index].classList.toggle('hidden');
+}
+
+function markTopic(topic, checked) {
+  const date = new Date().toISOString().split('T')[0];
+  if (!studyLog[date]) studyLog[date] = [];
+  const topicKey = `[${selectedSubject}] ${topic}`;
+  if (checked) {
+    if (!studyLog[date].includes(topicKey)) {
+      studyLog[date].push(topicKey);
+    }
+  } else {
+    studyLog[date] = studyLog[date].filter(t => t !== topicKey);
+  }
+  saveStudyLog();
+  updateProgress();
+}
+
+function updateProgress() {
+  const allCheckboxes = document.querySelectorAll('#chapters input[type="checkbox"]');
+  const checked = Array.from(allCheckboxes).filter(cb => cb.checked).length;
+  const total = allCheckboxes.length;
+  const percent = total === 0 ? 0 : Math.round((checked / total) * 100);
+
+  document.getElementById('progressPercent').textContent = percent + '%';
+  document.getElementById('progressBar').style.width = percent + '%';
+}
+
+function showGraph() {
+  document.getElementById('subjectSelect').classList.add('hidden');
+  document.getElementById('chapterList').classList.add('hidden');
+  document.getElementById('graphSection').classList.remove('hidden');
+
+  const ctx = document.getElementById('consistencyChart').getContext('2d');
+  const dates = getDateRange('2025-04-11', '2026-04-18');
+  const data = dates.map(date => studyLog[date]?.length || 0);
+
+  if (chartInstance) chartInstance.destroy();
+  chartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: dates,
+      datasets: [{
+        label: 'No. of Topics',
+        data,
+        fill: false,
+        borderColor: '#6c2bd9',
+        tension: 0.3,
+        pointRadius: 3
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      onClick: (e, el) => {
+        const index = el[1]?.index;
+        if (index !== undefined) showTopicDetails(dates[index]);
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: 'No. of Topics' }
+        },
+        x: {
+          ticks: {
+            maxRotation: 60,
+            minRotation: 60
+          }
+        }
+      }
+    }
+  });
+}
+
+function getDateRange(start, end) {
+  const result = [];
+  let date = new Date(start);
+  const endDate = new Date(end);
+  while (date <= endDate) {
+    result.push(date.toISOString().split('T')[0]);
+    date.setDate(date.getDate() + 1);
+  }
+  return result;
+}
+
+function showTopicDetails(date) {
+  const topics = studyLog[date] || [];
+  const container = document.getElementById('topicDetails');
+  container.innerHTML = `<strong>${date}</strong><ul>${topics.map(t => `<li>${t}</li>`).join('')}</ul>`;
+  container.classList.remove('add');
+}
+
+
+
+
+// Back to main subject menu
+function goBackToMenu() {
+  document.getElementById('chapterList').classList.add('hidden');
+  document.getElementById('graphSection').classList.add('hidden');
+  document.getElementById('subjectSelect').classList.remove('hidden');
+}
+// Reset progress with password
+function resetProgress() {
+  const password = prompt("Enter reset password to clear your progress:");
+  const correctPassword = "study@reset123"; // change this if needed
+
+  if (password === correctPassword) {
+    localStorage.removeItem('studyLog');
+    localStorage.removeItem('completedTopics');
+    alert("Progress has been reset!");
+    location.reload();
+  } else {
+    alert("Incorrect password. Try again!");
+  }
+}
+
+
+function verifyLogin() {
+  const userId = document.getElementById("login-id").value;
+  const password = document.getElementById("login-pass").value;
+
+  const correctId = "studytracker";        // 👤 your chosen ID
+  const correctPassword = "akash@123";   // 🔒 your chosen password
+
+  if (userId === correctId && password === correctPassword) {
+    // Hide login screen
+    document.getElementById("login-container").style.display = "none";
+    // Show main app
+    document.getElementById("main-content").style.display = "block";
+  } else {
+    alert("❌ Incorrect ID or Password");
+  }
+}</script>
